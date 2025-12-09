@@ -344,16 +344,14 @@
     </div>
 
     <script>
-
-        const DB_KEY = "rally_database_local";
+       
+        const API_URL = "http://localhost:5296/api/rally";
         let myChart = null;
-
 
         function formatearTiempo(totalSegundos) {
             const min = Math.floor(totalSegundos / 60);
             const seg = (totalSegundos % 60);
-            const segBonitos = seg < 10 ? "0" + seg.toFixed(2) : seg.toFixed(2);
-            return `${min}:${segBonitos}`;
+            return `${min}:${seg < 10 ? "0" + seg.toFixed(2) : seg.toFixed(2)}`;
         }
 
         function obtenerLogoCoche(coche) {
@@ -381,74 +379,63 @@
         }
 
 
+        async function cargarTabla() {
+            try {
+                const response = await fetch(API_URL);
+                const todosLosDatos = await response.json();
 
+                const tramoVisualizar = document.getElementById("tramoView").value;
 
-        function getDatos() {
-            const datosGuardados = localStorage.getItem(DB_KEY);
-            return datosGuardados ? JSON.parse(datosGuardados) : [];
-        }
+                const datosDelTramo = todosLosDatos.filter(d => d.tramo === tramoVisualizar);
+                datosDelTramo.sort((a, b) => a.tiempoSegundos - b.tiempoSegundos);
 
+                const tbody = document.getElementById("tablaBody");
+                tbody.innerHTML = "";
+                document.getElementById("contadorRegistros").innerText = `${datosDelTramo.length} pilotos en meta`;
 
-        function saveDatos(datos) {
-            localStorage.setItem(DB_KEY, JSON.stringify(datos));
-        }
+                if (datosDelTramo.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan='5' style='text-align:center; padding:30px; color:#666;'>
+                    Sin tiempos en <strong>${tramoVisualizar}</strong>.
+                </td></tr>`;
+                    if (myChart) myChart.destroy();
+                    return;
+                }
 
-        function cargarTabla() {
+                datosDelTramo.forEach((item, index) => {
+                    let gap = index > 0
+                        ? `<span style='color:#e74c3c; font-size:0.8rem'>(+${(item.tiempoSegundos - datosDelTramo[0].tiempoSegundos).toFixed(1)}s)</span>`
+                        : "";
 
-            const todosLosDatos = getDatos();
-            const tramoVisualizar = document.getElementById("tramoView").value;
+                    const imgBandera = obtenerImgBandera(item.piloto);
 
-            const datosDelTramo = todosLosDatos.filter(d => d.tramo === tramoVisualizar);
+                    const row = `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td><div class="pilot-name">${imgBandera} ${item.piloto}</div></td>
+                        <td>
+                            <div class="car-model">
+                                <img src="${obtenerLogoCoche(item.coche)}" width="24" height="24" style="object-fit:contain;">
+                                ${item.coche}
+                            </div>
+                        </td>
+                        <td style="text-align: right;">
+                            <strong>${formatearTiempo(item.tiempoSegundos)}</strong> <br>${gap}
+                        </td>
+                        <td style="text-align: center;">
+                            <button onclick="eliminar('${item.piloto}', '${tramoVisualizar}')" style="background:none; border:none; cursor:pointer; font-size:1.2rem; opacity:0.5;">🗑️</button>
+                        </td>
+                    </tr>`;
+                    tbody.innerHTML += row;
+                });
 
-            datosDelTramo.sort((a, b) => a.tiempoSegundos - b.tiempoSegundos);
+                renderizarGrafica(datosDelTramo);
 
-            const tbody = document.getElementById("tablaBody");
-            tbody.innerHTML = "";
-            document.getElementById("contadorRegistros").innerText = `${datosDelTramo.length} pilotos en meta`;
-
-            if (datosDelTramo.length === 0) {
-                tbody.innerHTML = `<tr><td colspan='5' style='text-align:center; padding:30px; color:#666;'>
-                            Sin tiempos en <strong>${tramoVisualizar}</strong>.
-                        </td></tr>`;
-                if (myChart) myChart.destroy();
-                return;
+            } catch (error) {
+                console.error("Error conectando con .NET:", error);
             }
-
-            datosDelTramo.forEach((item, index) => {
-                let gap = index > 0
-                    ? `<span style='color:#e74c3c; font-size:0.8rem'>(+${(item.tiempoSegundos - datosDelTramo[0].tiempoSegundos).toFixed(1)}s)</span>`
-                    : "";
-
-                const imgBandera = obtenerImgBandera(item.piloto);
-
-                const row = `
-                                <tr>
-                                    <td>${index + 1}</td>
-                                    <td>
-                                        <div class="pilot-name">${imgBandera} ${item.piloto}</div>
-                                    </td>
-                                    <td>
-                                        <div class="car-model">
-                                            <img src="${obtenerLogoCoche(item.coche)}" width="24" height="24" style="object-fit:contain;">
-                                            ${item.coche}
-                                        </div>
-                                    </td>
-                                    <td style="text-align: right;">
-                                        <strong>${formatearTiempo(item.tiempoSegundos)}</strong> <br>
-                                        ${gap}
-                                    </td>
-                                    <td style="text-align: center;">
-                                        <button onclick="eliminar('${item.piloto}', '${tramoVisualizar}')" style="background:none; border:none; cursor:pointer; font-size:1.2rem; opacity:0.5;">🗑️</button>
-                                    </td>
-                                </tr>
-                            `;
-                tbody.innerHTML += row;
-            });
-
-            renderizarGrafica(datosDelTramo);
         }
 
-        function enviarTiempo() {
+        async function enviarTiempo() {
             const p = document.getElementById("piloto").value;
             const c = document.getElementById("coche").value;
             const t = parseFloat(document.getElementById("tiempo").value);
@@ -459,69 +446,49 @@
                 return;
             }
 
-            let datos = getDatos();
+            try {
+                const res = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ piloto: p, coche: c, tiempoSegundos: t, tramo: tramo })
+                });
 
-            const existeIndex = datos.findIndex(d => d.piloto === p && d.tramo === tramo);
+                if (res.ok) {
+                    Swal.fire({
+                        icon: 'success', title: 'Guardado', text: `${p} en ${tramo}`,
+                        showConfirmButton: false, timer: 1500, background: '#1e1e1e', color: '#fff', toast: true, position: 'top-end'
+                    });
+                    document.getElementById("tiempo").value = "";
 
-            const nuevoRegistro = { piloto: p, coche: c, tiempoSegundos: t, tramo: tramo };
-
-            if (existeIndex >= 0) {
-                datos[existeIndex] = nuevoRegistro; 
-            } else {
-                datos.push(nuevoRegistro); 
-            }
-
-            saveDatos(datos); 
-
-            Swal.fire({
-                icon: 'success', title: 'Guardado',
-                text: `${p} en ${tramo}`,
-                showConfirmButton: false, timer: 1500,
-                background: '#1e1e1e', color: '#fff', toast: true, position: 'top-end'
-            });
-
-            document.getElementById("tiempo").value = "";
-
-
-            if (document.getElementById("tramoView").value === tramo) {
-                cargarTabla();
-            } else {
-                Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, icon: 'info', title: `Dato guardado en ${tramo}`, background: '#1e1e1e', color: '#fff' });
-            }
+                    if (document.getElementById("tramoView").value === tramo) {
+                        cargarTabla();
+                    }
+                }
+            } catch (error) { Swal.fire({ icon: 'error', title: 'Error servidor' }); }
         }
 
-        function eliminar(nombrePiloto, tramoContexto) {
+        async function eliminar(nombrePiloto, tramoContexto) {
             Swal.fire({
                 title: '¿Borrar registro?',
                 text: `Vas a eliminar a ${nombrePiloto} de ${tramoContexto}.`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'Sí, borrar',
-                background: '#1e1e1e', color: '#fff'
-            }).then((result) => {
+                icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Sí, borrar', background: '#1e1e1e', color: '#fff'
+            }).then(async (result) => {
                 if (result.isConfirmed) {
-                    let datos = getDatos();
-                    datos = datos.filter(d => !(d.piloto === nombrePiloto && d.tramo === tramoContexto));
-                    saveDatos(datos);
+                    const url = `${API_URL}/${encodeURIComponent(nombrePiloto)}?tramo=${encodeURIComponent(tramoContexto)}`;
+                    await fetch(url, { method: "DELETE" });
                     cargarTabla();
                     Swal.fire({ icon: 'success', title: 'Eliminado', showConfirmButton: false, timer: 1000, background: '#1e1e1e', color: '#fff', toast: true, position: 'top-end' });
                 }
             });
         }
 
-        function borrarTodo() {
+        async function borrarTodo() {
             Swal.fire({
-                title: '¿BORRAR TODO?',
-                text: "Se borrarán todos los tiempos de todos los tramos. No se puede deshacer.",
-                icon: 'error',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'SÍ, RESETEAR RALLY',
-                background: '#1e1e1e', color: '#fff'
-            }).then((result) => {
+                title: '¿BORRAR TODO?', text: "Se borrarán todos los tiempos. Irreversible.",
+                icon: 'error', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'SÍ, RESETEAR', background: '#1e1e1e', color: '#fff'
+            }).then(async (result) => {
                 if (result.isConfirmed) {
-                    localStorage.removeItem(DB_KEY);
+                    await fetch(API_URL + "/reset", { method: "DELETE" });
                     cargarTabla();
                     Swal.fire({ icon: 'success', title: 'Base de datos limpia', background: '#1e1e1e', color: '#fff' });
                 }
@@ -531,27 +498,18 @@
         function renderizarGrafica(datos) {
             const ctx = document.getElementById('miGrafica').getContext('2d');
             if (myChart) myChart.destroy();
-
             myChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: datos.map(x => x.piloto),
                     datasets: [{
-                        label: 'Tiempo (s)',
-                        data: datos.map(x => x.tiempoSegundos),
-                        backgroundColor: 'rgba(255, 95, 0, 0.6)',
-                        borderColor: 'rgba(255, 95, 0, 1)',
-                        borderWidth: 1,
-                        borderRadius: 4
+                        label: 'Tiempo (s)', data: datos.map(x => x.tiempoSegundos),
+                        backgroundColor: 'rgba(255, 95, 0, 0.6)', borderColor: 'rgba(255, 95, 0, 1)', borderWidth: 1, borderRadius: 4
                     }]
                 },
                 options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { grid: { color: '#333' }, ticks: { color: '#b0b0b0' } },
-                        x: { ticks: { color: '#fff' }, grid: { display: false } }
-                    }
+                    responsive: true, plugins: { legend: { display: false } },
+                    scales: { y: { grid: { color: '#333' }, ticks: { color: '#b0b0b0' } }, x: { ticks: { color: '#fff' }, grid: { display: false } } }
                 }
             });
         }
@@ -566,24 +524,47 @@
         }
 
         function descargarCSV() {
+
             const tramoActual = document.getElementById("tramoView").value;
-            const todos = getDatos();
-            const datosFiltrados = todos.filter(d => d.tramo === tramoActual);
 
-            let csv = "\uFEFFPosición,Tramo,Piloto,Coche,Tiempo (s)\n";
-            datosFiltrados.sort((a, b) => a.tiempoSegundos - b.tiempoSegundos);
+            fetch(API_URL)
+                .then(res => res.json()) 
+                .then(datos => {
 
-            datosFiltrados.forEach((d, i) => {
-                csv += `${i + 1},${d.tramo},"${d.piloto}","${d.coche}",${d.tiempoSegundos.toString().replace('.', ',')}\n`
-            });
+                    const datosFiltrados = datos.filter(d => d.tramo === tramoActual);
 
-            const link = document.createElement("a");
-            link.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
-            link.download = `Tiempos_${tramoActual}.csv`;
-            link.click();
+                    if (datosFiltrados.length === 0) {
+                        Swal.fire({ icon: 'info', title: 'Sin datos', text: `No hay tiempos en ${tramoActual} para descargar.` });
+                        return;
+                    }
+
+                    datosFiltrados.sort((a, b) => a.tiempoSegundos - b.tiempoSegundos);
+
+                    let csv = "\uFEFFPosición;Tramo;Piloto;Coche;Tiempo (s)\n";
+
+                    datosFiltrados.forEach((d, i) => {
+                        const tiempoConComa = d.tiempoSegundos.toString().replace('.', ',');
+
+                        csv += `${i + 1};${d.tramo};${d.piloto};${d.coche};${tiempoConComa}\n`;
+                    });
+
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `Clasificacion_${tramoActual}.csv`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                })
+                .catch(error => {
+                    console.error(error);
+                    Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo conectar con el servidor para descargar el CSV.' });
+                });
         }
 
+
         cargarTabla();
+        setInterval(cargarTabla, 10000); 
     </script>
 </body>
 </html>
