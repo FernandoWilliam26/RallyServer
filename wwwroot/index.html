@@ -1,0 +1,589 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlatOut Live Timing | Dirección de Carrera</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;600&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --wrc-orange: #ff5f00;
+            --wrc-blue: #002d5f;
+            --bg-dark: #121212;
+            --panel-bg: #1e1e1e;
+            --text-main: #ffffff;
+            --text-muted: #b0b0b0;
+            --border-color: #333;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--wrc-orange);
+            padding-bottom: 10px;
+        }
+
+        h1 {
+            font-family: 'Teko', sans-serif;
+            font-size: 3rem;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+            h1 span {
+                color: var(--wrc-orange);
+            }
+
+        .status-badge {
+            background-color: #27ae60;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            height: 10px;
+            width: 10px;
+            background-color: white;
+            border-radius: 50%;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .card {
+            background-color: var(--panel-bg);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
+            height: fit-content;
+        }
+
+        .card-header {
+            font-family: 'Teko', sans-serif;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px;
+            background-color: #2c2c2c;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+            select.tramo-selector {
+                width: auto;
+                margin-bottom: 0;
+                background-color: var(--wrc-blue);
+                border: 1px solid #4a90e2;
+                font-weight: bold;
+                text-align: center;
+                color: white;
+            }
+
+        button.btn-save {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, var(--wrc-orange), #ff8c00);
+            border: none;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-transform: uppercase;
+        }
+
+            button.btn-save:hover {
+                transform: scale(1.02);
+            }
+
+        .btn-refresh {
+            background: #333;
+            border: 1px solid #555;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-left: 5px;
+        }
+
+            .btn-refresh:hover {
+                background-color: #444;
+            }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 15px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 500;
+            vertical-align: middle;
+        }
+
+        .pilot-name {
+            font-weight: bold;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .car-model {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+
+        tr:first-child td {
+            color: #f1c40f;
+        }
+
+        tr:nth-child(2) .pilot-name {
+            color: #C0C0C0;
+        }
+
+        tr:nth-child(3) .pilot-name {
+            color: #CD7F32;
+        }
+
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>FlatOut <span>LIVE TIMING</span></h1>
+        <div class="status-badge"><div class="status-dot"></div> RALLY MODE</div>
+    </header>
+
+    <div class="dashboard">
+
+        <div class="card">
+            <div class="card-header">CONTROL DE TRAMO</div>
+
+            <label style="color: var(--wrc-orange); font-weight:bold;">📍 Tramo Actual (Entrada)</label>
+            <select id="tramoInput">
+                <option value="SS1">SS1 - Col de Turini</option>
+                <option value="SS2">SS2 - Otepää</option>
+                <option value="SS3">SS3 - Fafe</option>
+                <option value="SS4">SS4 - Les Voltes</option>
+                <option value="SS5">SS5 - Lake Mikawa</option>
+                <option value="SS6">SS6 - Rusava</option>
+            </select>
+
+            <hr style="border: 0; border-top: 1px solid #333; margin: 20px 0;">
+
+            <label>Seleccionar Piloto</label>
+            <select id="piloto">
+                <option value="" disabled selected>-- Elige Piloto --</option>
+
+                <optgroup label="Toyota Gazoo Racing">
+                    <option value="Kalle Rovanperä">Kalle Rovanperä</option>
+                    <option value="Sébastien Ogier">Sébastien Ogier</option>
+                    <option value="Elfyn Evans">Elfyn Evans</option>
+                    <option value="Takamoto Katsuta">Takamoto Katsuta</option>
+                </optgroup>
+
+                <optgroup label="Hyundai Shell Mobis">
+                    <option value="Thierry Neuville">Thierry Neuville</option>
+                    <option value="Ott Tänak">Ott Tänak</option>
+                    <option value="Dani Sordo">Dani Sordo</option>
+                </optgroup>
+
+                <optgroup label="M-Sport Ford WRT">
+                    <option value="Adrien Fourmaux">Adrien Fourmaux</option>
+                    <option value="Grégoire Munster">Grégoire Munster</option>
+                </optgroup>
+            </select>
+
+            <label>Seleccionar Coche</label>
+            <select id="coche">
+                <option value="Toyota GR Yaris Rally1">Toyota GR Yaris Rally1</option>
+                <option value="Hyundai i20 N Rally1">Hyundai i20 N Rally1</option>
+                <option value="Ford Puma Rally1">Ford Puma Rally1</option>
+            </select>
+
+            <label>Tiempo (Segundos)</label>
+            <input type="number" id="tiempo" placeholder="Ej: 124.50" step="0.01">
+
+            <button class="btn-save" onclick="enviarTiempo()">REGISTRAR TIEMPO 🏁</button>
+
+            <br><br>
+            <button onclick="borrarTodo()" style="background:none; border:1px solid #555; color:#777; width:100%; padding:5px; border-radius:4px; cursor:pointer;">⚠️ Borrar base de datos completa</button>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <select id="tramoView" class="tramo-selector" onchange="cargarTabla()">
+                    <option value="SS1">Ver SS1</option>
+                    <option value="SS2">Ver SS2</option>
+                    <option value="SS3">Ver SS3</option>
+                    <option value="SS4">Ver SS4</option>
+                    <option value="SS5">Ver SS5</option>
+                    <option value="SS6">Ver SS6</option>
+                </select>
+
+                <div>
+                    <button class="btn-refresh" onclick="descargarCSV()" title="Descargar CSV">📥</button>
+                    <button class="btn-refresh" onclick="cargarTabla()" title="Refrescar">↻</button>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 10px; display:flex; justify-content:space-between; align-items:center;">
+                <input type="text" id="buscador" placeholder="🔍 Buscar piloto..." onkeyup="filtrarTabla()" style="width: 200px; margin:0;">
+                <small style="color:#666;" id="contadorRegistros">0 pilotos</small>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th width="10%">POS</th>
+                        <th>PILOTO</th>
+                        <th>COCHE</th>
+                        <th style="text-align: right;">TIEMPO</th>
+                        <th width="5%"></th>
+                    </tr>
+                </thead>
+                <tbody id="tablaBody"></tbody>
+            </table>
+
+            <div style="margin-top: 30px; border-top: 1px solid #333; padding-top: 20px;">
+                <canvas id="miGrafica"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+
+        const DB_KEY = "rally_database_local";
+        let myChart = null;
+
+
+        function formatearTiempo(totalSegundos) {
+            const min = Math.floor(totalSegundos / 60);
+            const seg = (totalSegundos % 60);
+            const segBonitos = seg < 10 ? "0" + seg.toFixed(2) : seg.toFixed(2);
+            return `${min}:${segBonitos}`;
+        }
+
+        function obtenerLogoCoche(coche) {
+            coche = coche.toLowerCase();
+            if (coche.includes("toyota")) return "https://img.icons8.com/color/48/toyota.png";
+            if (coche.includes("hyundai")) return "https://img.icons8.com/color/48/hyundai.png";
+            if (coche.includes("ford")) return "https://img.icons8.com/color/48/ford.png";
+            return "https://img.icons8.com/color/48/race-car.png";
+        }
+
+        function obtenerImgBandera(nombre) {
+            const urlsBanderas = {
+                "kalle rovanperä": "https://img.icons8.com/color/48/finland.png",
+                "sébastien ogier": "https://img.icons8.com/color/48/france.png",
+                "elfyn evans": "https://img.icons8.com/color/48/great-britain.png",
+                "takamoto katsuta": "https://img.icons8.com/color/48/japan.png",
+                "thierry neuville": "https://img.icons8.com/color/48/belgium.png",
+                "ott tänak": "https://img.icons8.com/color/48/estonia.png",
+                "dani sordo": "https://img.icons8.com/color/48/spain-2.png",
+                "adrien fourmaux": "https://img.icons8.com/color/48/france.png",
+                "grégoire munster": "https://img.icons8.com/color/48/luxembourg.png"
+            };
+            const url = urlsBanderas[nombre.toLowerCase()];
+            return url ? `<img src="${url}" alt="flag" width="22" height="22" style="border-radius:3px;">` : "";
+        }
+
+
+
+
+        function getDatos() {
+            const datosGuardados = localStorage.getItem(DB_KEY);
+            return datosGuardados ? JSON.parse(datosGuardados) : [];
+        }
+
+
+        function saveDatos(datos) {
+            localStorage.setItem(DB_KEY, JSON.stringify(datos));
+        }
+
+        function cargarTabla() {
+
+            const todosLosDatos = getDatos();
+            const tramoVisualizar = document.getElementById("tramoView").value;
+
+            const datosDelTramo = todosLosDatos.filter(d => d.tramo === tramoVisualizar);
+
+            datosDelTramo.sort((a, b) => a.tiempoSegundos - b.tiempoSegundos);
+
+            const tbody = document.getElementById("tablaBody");
+            tbody.innerHTML = "";
+            document.getElementById("contadorRegistros").innerText = `${datosDelTramo.length} pilotos en meta`;
+
+            if (datosDelTramo.length === 0) {
+                tbody.innerHTML = `<tr><td colspan='5' style='text-align:center; padding:30px; color:#666;'>
+                            Sin tiempos en <strong>${tramoVisualizar}</strong>.
+                        </td></tr>`;
+                if (myChart) myChart.destroy();
+                return;
+            }
+
+            datosDelTramo.forEach((item, index) => {
+                let gap = index > 0
+                    ? `<span style='color:#e74c3c; font-size:0.8rem'>(+${(item.tiempoSegundos - datosDelTramo[0].tiempoSegundos).toFixed(1)}s)</span>`
+                    : "";
+
+                const imgBandera = obtenerImgBandera(item.piloto);
+
+                const row = `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>
+                                        <div class="pilot-name">${imgBandera} ${item.piloto}</div>
+                                    </td>
+                                    <td>
+                                        <div class="car-model">
+                                            <img src="${obtenerLogoCoche(item.coche)}" width="24" height="24" style="object-fit:contain;">
+                                            ${item.coche}
+                                        </div>
+                                    </td>
+                                    <td style="text-align: right;">
+                                        <strong>${formatearTiempo(item.tiempoSegundos)}</strong> <br>
+                                        ${gap}
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <button onclick="eliminar('${item.piloto}', '${tramoVisualizar}')" style="background:none; border:none; cursor:pointer; font-size:1.2rem; opacity:0.5;">🗑️</button>
+                                    </td>
+                                </tr>
+                            `;
+                tbody.innerHTML += row;
+            });
+
+            renderizarGrafica(datosDelTramo);
+        }
+
+        function enviarTiempo() {
+            const p = document.getElementById("piloto").value;
+            const c = document.getElementById("coche").value;
+            const t = parseFloat(document.getElementById("tiempo").value);
+            const tramo = document.getElementById("tramoInput").value;
+
+            if (!p || !c || !t) {
+                Swal.fire({ icon: 'warning', title: 'Faltan datos', background: '#1e1e1e', color: '#fff' });
+                return;
+            }
+
+            let datos = getDatos();
+
+            const existeIndex = datos.findIndex(d => d.piloto === p && d.tramo === tramo);
+
+            const nuevoRegistro = { piloto: p, coche: c, tiempoSegundos: t, tramo: tramo };
+
+            if (existeIndex >= 0) {
+                datos[existeIndex] = nuevoRegistro; 
+            } else {
+                datos.push(nuevoRegistro); 
+            }
+
+            saveDatos(datos); 
+
+            Swal.fire({
+                icon: 'success', title: 'Guardado',
+                text: `${p} en ${tramo}`,
+                showConfirmButton: false, timer: 1500,
+                background: '#1e1e1e', color: '#fff', toast: true, position: 'top-end'
+            });
+
+            document.getElementById("tiempo").value = "";
+
+
+            if (document.getElementById("tramoView").value === tramo) {
+                cargarTabla();
+            } else {
+                Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, icon: 'info', title: `Dato guardado en ${tramo}`, background: '#1e1e1e', color: '#fff' });
+            }
+        }
+
+        function eliminar(nombrePiloto, tramoContexto) {
+            Swal.fire({
+                title: '¿Borrar registro?',
+                text: `Vas a eliminar a ${nombrePiloto} de ${tramoContexto}.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Sí, borrar',
+                background: '#1e1e1e', color: '#fff'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let datos = getDatos();
+                    datos = datos.filter(d => !(d.piloto === nombrePiloto && d.tramo === tramoContexto));
+                    saveDatos(datos);
+                    cargarTabla();
+                    Swal.fire({ icon: 'success', title: 'Eliminado', showConfirmButton: false, timer: 1000, background: '#1e1e1e', color: '#fff', toast: true, position: 'top-end' });
+                }
+            });
+        }
+
+        function borrarTodo() {
+            Swal.fire({
+                title: '¿BORRAR TODO?',
+                text: "Se borrarán todos los tiempos de todos los tramos. No se puede deshacer.",
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'SÍ, RESETEAR RALLY',
+                background: '#1e1e1e', color: '#fff'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    localStorage.removeItem(DB_KEY);
+                    cargarTabla();
+                    Swal.fire({ icon: 'success', title: 'Base de datos limpia', background: '#1e1e1e', color: '#fff' });
+                }
+            });
+        }
+
+        function renderizarGrafica(datos) {
+            const ctx = document.getElementById('miGrafica').getContext('2d');
+            if (myChart) myChart.destroy();
+
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: datos.map(x => x.piloto),
+                    datasets: [{
+                        label: 'Tiempo (s)',
+                        data: datos.map(x => x.tiempoSegundos),
+                        backgroundColor: 'rgba(255, 95, 0, 0.6)',
+                        borderColor: 'rgba(255, 95, 0, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: '#333' }, ticks: { color: '#b0b0b0' } },
+                        x: { ticks: { color: '#fff' }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function filtrarTabla() {
+            const texto = document.getElementById("buscador").value.toLowerCase();
+            const filas = document.querySelectorAll("#tablaBody tr");
+            filas.forEach(fila => {
+                const contenido = fila.innerText.toLowerCase();
+                fila.style.display = contenido.includes(texto) ? "" : "none";
+            });
+        }
+
+        function descargarCSV() {
+            const tramoActual = document.getElementById("tramoView").value;
+            const todos = getDatos();
+            const datosFiltrados = todos.filter(d => d.tramo === tramoActual);
+
+            let csv = "\uFEFFPosición,Tramo,Piloto,Coche,Tiempo (s)\n";
+            datosFiltrados.sort((a, b) => a.tiempoSegundos - b.tiempoSegundos);
+
+            datosFiltrados.forEach((d, i) => {
+                csv += `${i + 1},${d.tramo},"${d.piloto}","${d.coche}",${d.tiempoSegundos.toString().replace('.', ',')}\n`
+            });
+
+            const link = document.createElement("a");
+            link.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+            link.download = `Tiempos_${tramoActual}.csv`;
+            link.click();
+        }
+
+        cargarTabla();
+    </script>
+</body>
+</html>
