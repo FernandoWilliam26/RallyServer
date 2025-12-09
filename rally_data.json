@@ -1,1 +1,140 @@
-[]
+[
+  {
+    "Piloto": "S\u00E9bastien Ogier",
+    "Coche": "Toyota GR Yaris Rally1",
+    "TiempoSegundos": 122,
+    "Tramo": "SS2"
+  },
+  {
+    "Piloto": "Elfyn Evans",
+    "Coche": "Toyota GR Yaris Rally1",
+    "TiempoSegundos": 123,
+    "Tramo": "SS2"
+  },
+  {
+    "Piloto": "Takamoto Katsuta",
+    "Coche": "Toyota GR Yaris Rally1",
+    "TiempoSegundos": 124,
+    "Tramo": "SS2"
+  },
+  {
+    "Piloto": "Thierry Neuville",
+    "Coche": "Hyundai i20 N Rally1",
+    "TiempoSegundos": 125,
+    "Tramo": "SS2"
+  },
+  {
+    "Piloto": "Ott T\u00E4nak",
+    "Coche": "Hyundai i20 N Rally1",
+    "TiempoSegundos": 120.5,
+    "Tramo": "SS2"
+  },
+  {
+    "Piloto": "Adrien Fourmaux",
+    "Coche": "Ford Puma Rally1",
+    "TiempoSegundos": 127,
+    "Tramo": "SS2"
+  },
+  {
+    "Piloto": "Gr\u00E9goire Munster",
+    "Coche": "Ford Puma Rally1",
+    "TiempoSegundos": 300,
+    "Tramo": "SS2"
+  },
+  {
+    "Piloto": "Dani Sordo",
+    "Coche": "Hyundai i20 N Rally1",
+    "TiempoSegundos": 120,
+    "Tramo": "SS2"
+  },
+  {
+    "Piloto": "Kalle Rovanper\u00E4",
+    "Coche": "Toyota GR Yaris Rally1",
+    "TiempoSegundos": 121,
+    "Tramo": "SS2"
+  },
+  {
+    "Piloto": "Kalle Rovanper\u00E4",
+    "Coche": "Toyota GR Yaris Rally1",
+    "TiempoSegundos": 123,
+    "Tramo": "SS1"
+  },
+  {
+    "Piloto": "S\u00E9bastien Ogier",
+    "Coche": "Toyota GR Yaris Rally1",
+    "TiempoSegundos": 124,
+    "Tramo": "SS1"
+  },
+  {
+    "Piloto": "Elfyn Evans",
+    "Coche": "Toyota GR Yaris Rally1",
+    "TiempoSegundos": 125,
+    "Tramo": "SS1"
+  },
+  {
+    "Piloto": "Takamoto Katsuta",
+    "Coche": "Toyota GR Yaris Rally1",
+    "TiempoSegundos": 126,
+    "Tramo": "SS1"
+  },
+  {
+    "Piloto": "Thierry Neuville",
+    "Coche": "Hyundai i20 N Rally1",
+    "TiempoSegundos": 125,
+    "Tramo": "SS1"
+  },
+  {
+    "Piloto": "Ott T\u00E4nak",
+    "Coche": "Hyundai i20 N Rally1",
+    "TiempoSegundos": 124,
+    "Tramo": "SS1"
+  },
+  {
+    "Piloto": "Dani Sordo",
+    "Coche": "Hyundai i20 N Rally1",
+    "TiempoSegundos": 123.1,
+    "Tramo": "SS1"
+  },
+  {
+    "Piloto": "Adrien Fourmaux",
+    "Coche": "Ford Puma Rally1",
+    "TiempoSegundos": 128,
+    "Tramo": "SS1"
+  },
+  {
+    "Piloto": "Gr\u00E9goire Munster",
+    "Coche": "Ford Puma Rally1",
+    "TiempoSegundos": 150,
+    "Tramo": "SS1"
+  },
+  {
+    "Piloto": "Cohete Su\u00E1rez",
+    "Coche": "Ford Puma Rally1",
+    "TiempoSegundos": 122.9,
+    "Tramo": "SS1"
+  },
+  {
+    "Piloto": "Antonio Ariete",
+    "Coche": "Hyundai i20 N Rally1",
+    "TiempoSegundos": 109,
+    "Tramo": "SS1"
+  },
+  {
+    "Piloto": "Javier Polidura",
+    "Coche": "Ford Puma Rally1",
+    "TiempoSegundos": 108,
+    "Tramo": "SS1"
+  },
+  {
+    "Piloto": "Carlos Moreno",
+    "Coche": "Toyota GR Yaris Rally1",
+    "TiempoSegundos": 123,
+    "Tramo": "SS1"
+  },
+  {
+    "Piloto": "\u00C1lvaro San Mart\u00EDn",
+    "Coche": "Hyundai i20 N Rally1",
+    "TiempoSegundos": 96,
+    "Tramo": "SS1"
+  }
+]

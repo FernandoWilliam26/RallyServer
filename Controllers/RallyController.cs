@@ -44,28 +44,31 @@ namespace RallyServer.Controllers
             return Ok(estadisticas);
         }
 
-        // POST
+        // POST VISUALIZAR 
         [HttpPost]
         public async Task<ActionResult> GuardarTiempo([FromBody] TramoRecord nuevo)
         {
             if (string.IsNullOrWhiteSpace(nuevo.Piloto) || string.IsNullOrWhiteSpace(nuevo.Coche))
-                return BadRequest("Faltan datos.");
+                return BadRequest(new { mensaje = "Faltan datos." });
+
+            if (nuevo.TiempoSegundos <= 0)
+                return BadRequest(new { mensaje = "El tiempo debe ser positivo." });
 
             if (string.IsNullOrEmpty(nuevo.Tramo)) nuevo.Tramo = "SS1";
 
             var lista = await LeerDatos();
-
             var existente = lista.FirstOrDefault(x =>
                 x.Piloto.ToLower() == nuevo.Piloto.ToLower() &&
                 x.Tramo == nuevo.Tramo);
 
             if (existente != null)
             {
-                existente.TiempoSegundos = nuevo.TiempoSegundos;
-                existente.Coche = nuevo.Coche;
+
+                return Conflict(new { mensaje = $" {nuevo.Piloto} ya tiene un tiempo registrado en {nuevo.Tramo}. No se puede duplicar." });
             }
             else
             {
+
                 lista.Add(nuevo);
             }
 
